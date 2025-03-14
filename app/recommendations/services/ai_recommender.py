@@ -13,7 +13,7 @@ def fetch_ai_book_recommendations(user_preferences):
 
     # Construct the prompt for GPT-3.5
     prompt = f"""
-    Suggest 3 books based on the following preferences:
+    Suggest 5 books based on the following preferences:
     - Genres: {user_preferences.get('genres', 'any')}
     - Favorite Books: {', '.join(user_preferences.get('favorite_books', []))}
     - Mood: {user_preferences.get('mood', 'any mood')}

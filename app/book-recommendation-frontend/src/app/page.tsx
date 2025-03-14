@@ -10,13 +10,13 @@ type Book = {
   authors: string[];
   thumbnail: string;
   description: string;
-  // Add other fields as necessary
 };
 
 export default function Home() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [expandedStates, setExpandedStates] = useState<{ [key: number]: boolean }>({});
 
   // 🎯 User Preferences State
   const [genres, setGenres] = useState("");
@@ -37,13 +37,13 @@ export default function Home() {
         user_id: 2,
         genres,
         mood,
-        favorite_books: favoriteBooks.split(",").map((b) => b.trim()), // Convert comma-separated to array
+        favorite_books: favoriteBooks.split(",").map((b) => b.trim()),
         length,
         release_preference: releasePreference,
       };
 
       const data = await getBookRecommendations(userPreferences);
-      console.log("Received data:", data); // Debugging
+      console.log("Received data:", data);
 
       // ✅ Ensure `recommendations` is accessed correctly
       if (!data || !data.recommendations || !Array.isArray(data.recommendations)) {
@@ -57,7 +57,7 @@ export default function Home() {
         title: book.title || "Unknown Title",
         authors: book.authors || ["Unknown Author"],
         description: book.description || "No description available.",
-        thumbnail: book.thumbnail || ""
+        thumbnail: book.thumbnail || "",
       }));
 
       console.log("Processed books:", booksArray);
@@ -70,109 +70,140 @@ export default function Home() {
     }
   }
 
+  const toggleExpand = (index: number) => {
+    setExpandedStates((prevState) => ({
+      ...prevState,
+      [index]: !prevState[index],
+    }));
+  };
+
   return (
     <main className="flex flex-col items-center p-6 min-h-screen bg-gray-900 text-white">
-      <h1 className="text-3xl font-bold mb-6">📚 AI Book Recommendations</h1>
+      <h1 className="text-3xl font-bold mb-6">📚 Book Recommendation Agent</h1>
 
-      {/* 🎯 User Input Form */}
-      <div className="w-full max-w-lg bg-gray-800 p-6 rounded-lg shadow-lg">
-        <label className="block mb-2 text-white">Genres:</label>
-        <input
-          type="text"
-          className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
-          placeholder="e.g. Sci-Fi, Mystery"
-          value={genres}
-          onChange={(e) => setGenres(e.target.value)}
-        />
+      {/* 🎯 Layout Container - Ensures Inputs Appear ABOVE Books */}
+      <div className="content-container w-full max-w-5xl flex flex-col">
 
-        <label className="block mb-2 text-white">Preferred Mood:</label>
-        <select
-          className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
-          value={mood}
-          onChange={(e) => setMood(e.target.value)}
-        >
-          <option value="">Select Mood</option>
-          <option value="relaxing">Relaxing</option>
-          <option value="thrilling">Thrilling</option>
-          <option value="intellectual">Intellectual</option>
-        </select>
+        {/* 🎯 User Input Form */}
+        <div className="input-field bg-gray-800 p-6 rounded-lg shadow-lg mb-6">
+          <label className="block mb-2 text-white">Genres:</label>
+          <input
+            type="text"
+            className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
+            placeholder="e.g. Sci-Fi, Mystery"
+            value={genres}
+            onChange={(e) => setGenres(e.target.value)}
+          />
 
-        <label className="block mb-2 text-white">Favorite Books:</label>
-        <input
-          type="text"
-          className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
-          placeholder="e.g. Dune, The Hobbit"
-          value={favoriteBooks}
-          onChange={(e) => setFavoriteBooks(e.target.value)}
-        />
+          <label className="block mb-2 text-white">Preferred Mood:</label>
+          <select
+            className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
+            value={mood}
+            onChange={(e) => setMood(e.target.value)}
+          >
+            <option value="">Select Mood</option>
+            <option value="relaxing">Relaxing</option>
+            <option value="thrilling">Thrilling</option>
+            <option value="intellectual">Intellectual</option>
+          </select>
 
-        <label className="block mb-2 text-white">Preferred Book Length:</label>
-        <select
-          className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
-          value={length}
-          onChange={(e) => setLength(e.target.value)}
-        >
-          <option value="">Select Length</option>
-          <option value="short">Short</option>
-          <option value="medium">Medium</option>
-          <option value="long">Long</option>
-        </select>
+          <label className="block mb-2 text-white">Favorite Books:</label>
+          <input
+            type="text"
+            className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
+            placeholder="e.g. Dune, The Hobbit"
+            value={favoriteBooks}
+            onChange={(e) => setFavoriteBooks(e.target.value)}
+          />
 
-        <label className="block mb-2 text-white">New vs Classic:</label>
-        <div className="flex gap-4">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="releasePreference"
-              value="new"
-              checked={releasePreference === "new"}
-              onChange={() => setReleasePreference("new")}
-              className="mr-2"
-            />
-            New Releases
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              name="releasePreference"
-              value="classic"
-              checked={releasePreference === "classic"}
-              onChange={() => setReleasePreference("classic")}
-              className="mr-2"
-            />
-            Classic Books
-          </label>
+          <label className="block mb-2 text-white">Preferred Book Length:</label>
+          <select
+            className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
+            value={length}
+            onChange={(e) => setLength(e.target.value)}
+          >
+            <option value="">Select Length</option>
+            <option value="short">Short</option>
+            <option value="medium">Medium</option>
+            <option value="long">Long</option>
+          </select>
+
+          <div className="filter-section block mb-2 text-white">
+            <label>New vs Classic:</label>
+            <div className="radio-group">
+                <label>
+                    <input
+                        type="radio"
+                        name="releasePreference"
+                        value="new"
+                        checked={releasePreference === "new"}
+                        onChange={() => setReleasePreference("new")}
+                    />
+                    📚 Latest Releases
+                </label>
+                <label>
+                    <input
+                        type="radio"
+                        name="releasePreference"
+                        value="classic"
+                        checked={releasePreference === "classic"}
+                        onChange={() => setReleasePreference("classic")}
+                    />
+                    📖 Classics & Older Titles
+                </label>
+                <label>
+                    <input
+                        type="radio"
+                        name="releasePreference"
+                        value="any release date"
+                        checked={releasePreference === "any release date"}
+                        onChange={() => setReleasePreference("any release date")}
+                    />
+                    🌍 All Eras
+                </label>
+            </div>
         </div>
 
-        <button
-          onClick={fetchBooks}
-          className="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 focus:ring focus:ring-blue-300"
-          disabled={loading}
-        >
-          {loading ? "Fetching..." : "Get Recommendations"}
-        </button>
+
+
+          <button
+            onClick={fetchBooks}
+            className="get-recommendations-button mt-4 bg-blue-500 text-white py-2 px-6 rounded hover:bg-blue-600"
+            disabled={loading}
+          >
+            {loading ? "Fetching..." : "Get Recommendations"}
+          </button>
+
+          {error && <p className="text-red-500 mt-4">{error}</p>}
+        </div>
+
+        {/* 🎯 Books List */}
+        {!loading && !error && books.length > 0 && (
+          <ul className="book-list bg-gray-800 p-4 rounded-lg shadow-md w-full mx-auto">
+            {books.map((book, index) => (
+              <li key={index} className="book-card flex items-start space-x-4 p-4 rounded-lg bg-gray-700">
+                <img src={book.thumbnail} alt={book.title} className="book-thumbnail w-36 h-48 object-cover rounded-md" />
+                
+                <div className="book-info flex-1">
+                  <h3 className="text-lg font-bold text-white">{book.title}</h3>
+                  <p className="text-gray-400"><strong>by {book.authors.join(", ")}</strong></p>
+                  
+                  <p className={`book-description ${expandedStates[index] ? "expanded" : "line-clamp-3"} text-gray-300`}>
+                    {book.description}
+                  </p>
+
+                  <button
+                    className="show-more-btn mt-2 text-blue-400 hover:text-blue-300 underline block"
+                    onClick={() => toggleExpand(index)}
+                  >
+                    {expandedStates[index] ? "Show Less" : "Show More"}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-
-      {error && <p className="text-red-500 mt-4">{error}</p>}
-
-      {!loading && !error && books.length > 0 && (
-        <ul className="book-list bg-gray-800 p-4 rounded-lg shadow-md mt-4">
-          {books.map((book, index) => (
-            <li key={index} className="book-card">
-              <img src={book.thumbnail} alt={book.title} className="book-thumbnail" />
-              <div className="book-info">
-                <h3>{book.title}</h3>
-                <p><strong>by {book.authors.join(", ")}</strong></p>
-                <p>{book.description}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {!loading && !error && books.length === 0 && (
-        <p className="text-gray-400 mt-4">No recommendations found.</p>
-      )}
     </main>
   );
 }
