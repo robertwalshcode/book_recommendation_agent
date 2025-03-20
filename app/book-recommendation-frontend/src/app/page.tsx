@@ -1,9 +1,12 @@
 // page.tsx - AI Book Recommendations Frontend
 
-"use client";
+"use client"; // Ensure this runs only on the client side
 
-import { useState } from "react";
-import { getBookRecommendations } from "../utils/api";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // Use next/navigation for app router
+// import { getBookRecommendations } from "../utils/api";
+import { jwtDecode } from "jwt-decode"; // ✅ Import JWT decoding library
+import { getBookRecommendations } from "@/utils/api";
 
 type Book = {
   title: string;
@@ -17,6 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedStates, setExpandedStates] = useState<{ [key: number]: boolean }>({});
+  const router = useRouter(); // Router for navigation
 
   // 🎯 User Preferences State
   const [genres, setGenres] = useState("");
@@ -25,16 +29,58 @@ export default function Home() {
   const [length, setLength] = useState("");
   const [releasePreference, setReleasePreference] = useState("new");
 
+  // 🔐 Ensure user is authenticated before showing content
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      router.push("/login"); // Redirect to login if no token
+    }
+  }, [router]);
+
+  // 🔴 **Logout Function**
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken"); // Remove token
+    router.push("/login"); // Redirect to login page
+  };
+
+  // Function to extract user_id from JWT token
+  const getUserIdFromToken = () => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return null;
+
+    try {
+      const decodedToken: any = jwtDecode(token); // Decode JWT
+      return decodedToken.user_id || null; // Extract user_id
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      return null;
+    }
+  };
+
   async function fetchBooks() {
     setLoading(true);
     setError("");
 
     try {
       console.log("Fetching recommendations...");
+      const token = localStorage.getItem("accessToken");
+
+      if (!token) {
+        setError("User not authenticated. Please log in.");
+        router.push("/login");
+        return;
+      }
+
+      const userId = getUserIdFromToken(); // 🔥 Extract user ID from token
+      if (!userId) {
+        setError("Invalid user session. Please log in again.");
+        router.push("/login");
+        return;
+      }
 
       // 🎯 Build user preferences object
       const userPreferences = {
-        user_id: 2,
+        user_id: userId, 
         genres,
         mood,
         favorite_books: favoriteBooks.split(",").map((b) => b.trim()),
@@ -42,7 +88,8 @@ export default function Home() {
         release_preference: releasePreference,
       };
 
-      const data = await getBookRecommendations(userPreferences);
+      // 🔥 Use the updated getBookRecommendations function
+      const data = await getBookRecommendations(userPreferences, token);
       console.log("Received data:", data);
 
       // ✅ Ensure `recommendations` is accessed correctly
@@ -56,7 +103,7 @@ export default function Home() {
       const booksArray = data.recommendations.map((book: any) => ({
         title: book.title || "Unknown Title",
         authors: book.authors || ["Unknown Author"],
-        description: book.description || "No description available.",
+        description: book.description?.trim() || "No description available.",
         thumbnail: book.thumbnail || "",
       }));
 
@@ -68,7 +115,8 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }
+}
+
 
   const toggleExpand = (index: number) => {
     setExpandedStates((prevState) => ({
@@ -79,6 +127,16 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center p-6 min-h-screen bg-gray-900 text-white">
+      {/* 🔴 Logout Button (Top Right) */}
+      <div className="w-full flex justify-end px-6">
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600"
+        >
+          Logout
+        </button>
+      </div>
+
       <h1 className="text-3xl font-bold mb-6">📚 Book Recommendation Agent</h1>
 
       {/* 🎯 Layout Container - Ensures Inputs Appear ABOVE Books */}
@@ -162,9 +220,7 @@ export default function Home() {
                     🌍 All Eras
                 </label>
             </div>
-        </div>
-
-
+          </div>
 
           <button
             onClick={fetchBooks}
@@ -183,11 +239,12 @@ export default function Home() {
             {books.map((book, index) => (
               <li key={index} className="book-card flex items-start space-x-4 p-4 rounded-lg bg-gray-700">
                 <img src={book.thumbnail} alt={book.title} className="book-thumbnail w-36 h-48 object-cover rounded-md" />
-                
+
                 <div className="book-info flex-1">
                   <h3 className="text-lg font-bold text-white">{book.title}</h3>
                   <p className="text-gray-400"><strong>by {book.authors.join(", ")}</strong></p>
-                  
+
+                  {/* ✅ Ensure Description is Displayed */}
                   <p className={`book-description ${expandedStates[index] ? "expanded" : "line-clamp-3"} text-gray-300`}>
                     {book.description}
                   </p>

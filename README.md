@@ -72,3 +72,14 @@ An AI Agent learning project using gpt-3.5 turbo and Google Books to recommend b
 3. Add your own API keys as the values for each variable
 4. Save the file
 5. Rename the file to ".env" (no quotations)
+
+### 3. Run the application
+#### 1. Run the backend server
+1. Go to book_recommendation_agent/app
+2. In terminal type: ```python manage.py runserver```
+#### 2. Run the frontend server
+1. Go to book_recommendation_agent/frontend
+2. In terminal type: ```npm run dev```
+
+### 4. Open the application in your browser
+Go to http://localhost:3000 in your preferred browser
