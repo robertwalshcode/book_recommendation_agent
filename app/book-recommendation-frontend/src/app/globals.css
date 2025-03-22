@@ -149,3 +149,18 @@ body {
 .show-more-btn:hover {
   text-decoration: underline;
 }
+
+/* Feedback button group in bottom-right corner */
+.book-feedback-buttons {
+  position: absolute;
+  bottom: -5px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Visual indicator (clicked state) */
+.feedback-selected {
+  opacity: 0.6;
+  pointer-events: none;
+}
