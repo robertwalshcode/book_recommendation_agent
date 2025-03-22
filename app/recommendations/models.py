@@ -28,17 +28,14 @@ class Book(models.Model):
     def __str__(self):
         return self.title
 
-class UserBookFeedback(models.Model):  # ✅ Renamed to be more intuitive
-    """Tracks user feedback on books (like/dislike)."""
+class UserBookFeedback(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    book = models.ForeignKey(Book, on_delete=models.CASCADE)
-    feedback_type = models.CharField(
-        max_length=10, choices=[('like', 'Like'), ('dislike', 'Dislike')]
-    )
-    timestamp = models.DateTimeField(auto_now_add=True)
+    book_title = models.CharField(max_length=255, default="Book Title")
+    feedback = models.CharField(max_length=10, choices=[("like", "Like"), ("dislike", "Dislike")])
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'book')  # Prevent duplicate feedback
+        unique_together = ('user', 'book_title')  # Prevent duplicate feedback at DB level
 
     def __str__(self):
-        return f"{self.user.username} - {self.feedback_type} - {self.book.title}"
+        return f"{self.user.username} - {self.book_title} - {self.feedback}"

@@ -4,9 +4,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Use next/navigation for app router
-// import { getBookRecommendations } from "../utils/api";
 import { jwtDecode } from "jwt-decode"; // ✅ Import JWT decoding library
 import { getBookRecommendations } from "@/utils/api";
+import { refreshAccessToken, authFetch } from "../utils/token";
 
 type Book = {
   title: string;
@@ -20,6 +20,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [expandedStates, setExpandedStates] = useState<{ [key: number]: boolean }>({});
+  const [feedbackState, setFeedbackState] = useState<{ [title: string]: "like" | "dislike" | null }>({});
   const router = useRouter(); // Router for navigation
 
   // 🎯 User Preferences State
@@ -36,6 +37,38 @@ export default function Home() {
       router.push("/login"); // Redirect to login if no token
     }
   }, [router]);
+
+  // Tracks state of user feedback buttons
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+  
+    authFetch("http://127.0.0.1:8000/recommendations/get-feedback/", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+    .then((res) => {
+      if (!res.ok) {
+        return res.text().then(text => {
+          throw new Error(`Failed to fetch user feedback: ${text}`);
+        });
+      }
+      return res.json();
+    })
+      .then((data) => {
+        const state: { [title: string]: "like" | "dislike" } = {};
+        data.forEach((entry: { book_title: string; feedback: "like" | "dislike" }) => {
+          state[entry.book_title] = entry.feedback;
+        });
+        setFeedbackState(state); // ✅ updates your existing state
+      })
+      .catch((err) => {
+        console.error("❌ Could not load user feedback", err);
+      });
+  }, []);
 
   // 🔴 **Logout Function**
   const handleLogout = () => {
@@ -56,6 +89,60 @@ export default function Home() {
       return null;
     }
   };
+
+
+  const sendFeedback = async (bookTitle: string, feedback: "like" | "dislike") => {
+    let token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      console.error("No token found.");
+      return;
+    }
+
+    try {
+      let response = await authFetch("http://127.0.0.1:8000/recommendations/submit-feedback/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: getUserIdFromToken(),
+          book_title: bookTitle,
+          feedback,
+        }),
+      });
+
+      // 🔁 Try refreshing token if it's expired
+      if (response.status === 401) {
+        token = await refreshAccessToken();
+        response = await authFetch("http://127.0.0.1:8000/recommendations/submit-feedback/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            user_id: getUserIdFromToken(),
+            book_title: bookTitle,
+            feedback,
+          }),
+        });
+      }
+
+      if (!response.ok) {
+        const errorDetails = await response.text();
+        console.error("Feedback failed:", errorDetails);
+        throw new Error("Failed to submit feedback.");
+      }
+
+      const result = await response.json();
+      console.log(`✅ Feedback '${feedback}' sent for book: '${bookTitle}'`, result);
+    } catch (error) {
+      console.error("❌ Feedback Error:", error);
+    }
+  };
+
 
   async function fetchBooks() {
     setLoading(true);
@@ -153,16 +240,25 @@ export default function Home() {
             onChange={(e) => setGenres(e.target.value)}
           />
 
-          <label className="block mb-2 text-white">Preferred Mood:</label>
+          <label className="block mb-2 text-white">Your Mood:</label>
           <select
             className="w-full p-2 bg-gray-700 text-white border border-gray-600 rounded mb-3 focus:ring focus:ring-blue-500"
             value={mood}
             onChange={(e) => setMood(e.target.value)}
           >
             <option value="">Select Mood</option>
-            <option value="relaxing">Relaxing</option>
+            <option value="relaxed">Relaxed</option>
             <option value="thrilling">Thrilling</option>
             <option value="intellectual">Intellectual</option>
+            <option value="romantic">Romantic</option>
+            <option value="melancholic">Melancholic</option>
+            <option value="dark">Dark</option>
+            <option value="playful">Playful</option>
+            <option value="curious ">Curious</option>
+            <option value="happy">Happy</option>
+            <option value="adventurous ">Adventurous</option>
+            <option value="philosophical ">Philosophical</option>
+            
           </select>
 
           <label className="block mb-2 text-white">Favorite Books:</label>
@@ -238,13 +334,15 @@ export default function Home() {
           <ul className="book-list bg-gray-800 p-4 rounded-lg shadow-md w-full mx-auto">
             {books.map((book, index) => (
               <li key={index} className="book-card flex items-start space-x-4 p-4 rounded-lg bg-gray-700">
-                <img src={book.thumbnail} alt={book.title} className="book-thumbnail w-36 h-48 object-cover rounded-md" />
+                <img
+                  src={book.thumbnail || "/placeholder.jpg"}
+                  alt={book.title || "Book cover placeholder"}
+                  className="book-thumbnail w-36 h-48 object-cover rounded-md"
+                />
 
-                <div className="book-info flex-1">
+                <div className="book-info flex-1 relative">
                   <h3 className="text-lg font-bold text-white">{book.title}</h3>
                   <p className="text-gray-400"><strong>by {book.authors.join(", ")}</strong></p>
-
-                  {/* ✅ Ensure Description is Displayed */}
                   <p className={`book-description ${expandedStates[index] ? "expanded" : "line-clamp-3"} text-gray-300`}>
                     {book.description}
                   </p>
@@ -255,6 +353,38 @@ export default function Home() {
                   >
                     {expandedStates[index] ? "Show Less" : "Show More"}
                   </button>
+
+                  <div className="book-feedback-buttons">
+                    <button 
+                      className={`like-btn border border-green-500 text-green-500 px-2 py-1 rounded text-sm transition-colors duration-200
+                        ${feedbackState[book.title] === "like" ? "bg-green-500 text-white" : "hover:bg-green-500 hover:bg-opacity-20"}`}
+                      onClick={() => {
+                        const alreadyLiked = feedbackState[book.title] === "like";
+                        setFeedbackState(prev => ({
+                          ...prev,
+                          [book.title]: alreadyLiked ? null : "like"
+                        }));
+                        if (!alreadyLiked) sendFeedback(book.title, "like");
+                      }}
+                    >
+                      👍
+                    </button>
+
+                    <button 
+                      className={`dislike-btn border border-red-500 text-red-500 px-2 py-1 rounded text-sm transition-colors duration-200
+                        ${feedbackState[book.title] === "dislike" ? "bg-red-500 text-white" : "hover:bg-red-500 hover:bg-opacity-20"}`}
+                      onClick={() => {
+                        const alreadyDisliked = feedbackState[book.title] === "dislike";
+                        setFeedbackState(prev => ({
+                          ...prev,
+                          [book.title]: alreadyDisliked ? null : "dislike"
+                        }));
+                        if (!alreadyDisliked) sendFeedback(book.title, "dislike");
+                      }}
+                    >
+                      👎
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

@@ -10,7 +10,7 @@ export async function getBookRecommendations(userPreferences, token) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`, // 🔐 Send token with request
+              Authorization: `Bearer ${token}`, // Token sent with request
             },
             body: JSON.stringify(userPreferences),
           });
@@ -22,7 +22,7 @@ export async function getBookRecommendations(userPreferences, token) {
         const data = await response.json();
         // console.log("Received data:", data);
 
-        return data; // 🔥 Ensure function returns the fetched data ✅
+        return data; // Function returns the fetched data 
     } catch (error) {
         console.error("API Error:", error);
         throw error;
@@ -30,7 +30,7 @@ export async function getBookRecommendations(userPreferences, token) {
 }
 
 
-export async function searchBooks(query) {  // ✅ Re-adding missing function
+export async function searchBooks(query) { 
     try {
         const response = await fetch(`${API_BASE_URL}/search/?q=${query}`);
         if (!response.ok) throw new Error("Failed to fetch books");

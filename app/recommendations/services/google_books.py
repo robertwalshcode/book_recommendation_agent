@@ -1,5 +1,6 @@
 # google_books.py
 import requests
+import hashlib
 import json
 from django.core.cache import cache
 from django.conf import settings
@@ -18,7 +19,7 @@ def fetch_books(user_preferences):
         return []
 
     # Create a cache key based on user preferences
-    cache_key = f"books:{json.dumps(user_preferences, sort_keys=True)}"
+    cache_key = make_cache_key(user_preferences)
 
     # Check if cached data exists
     cached_books = cache.get(cache_key)
@@ -53,3 +54,9 @@ def fetch_books(user_preferences):
     cache.set(cache_key, book_details, timeout=21600)
 
     return book_details
+
+
+def make_cache_key(user_preferences):
+    key_string = json.dumps(user_preferences, sort_keys=True)
+    hashed = hashlib.md5(key_string.encode('utf-8')).hexdigest()
+    return f"books:{hashed}"
