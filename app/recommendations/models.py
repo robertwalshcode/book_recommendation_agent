@@ -39,3 +39,10 @@ class UserBookFeedback(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.book_title} - {self.feedback}"
+    
+class UserSearchHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    preferences = models.JSONField()
+    recommendations = models.JSONField()
+    embedding = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

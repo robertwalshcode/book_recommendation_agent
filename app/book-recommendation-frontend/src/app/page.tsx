@@ -246,7 +246,7 @@ export default function Home() {
             value={mood}
             onChange={(e) => setMood(e.target.value)}
           >
-            <option value="">Select Mood</option>
+            <option value="I don't care about mood">Select Mood</option>
             <option value="relaxed">Relaxed</option>
             <option value="thrilling">Thrilling</option>
             <option value="intellectual">Intellectual</option>
@@ -254,10 +254,10 @@ export default function Home() {
             <option value="melancholic">Melancholic</option>
             <option value="dark">Dark</option>
             <option value="playful">Playful</option>
-            <option value="curious ">Curious</option>
+            <option value="curious">Curious</option>
             <option value="happy">Happy</option>
-            <option value="adventurous ">Adventurous</option>
-            <option value="philosophical ">Philosophical</option>
+            <option value="adventurous">Adventurous</option>
+            <option value="philosophical">Philosophical</option>
             
           </select>
 

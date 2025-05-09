@@ -8,7 +8,7 @@ from recommendations.services.ai_recommender import fetch_ai_book_recommendation
 
 GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
 
-def fetch_books(user_preferences):
+def fetch_books(user_preferences, user=None):
     """
     Uses GPT-3.5 to suggest books and retrieves details from Google Books API.
     Implements caching using Django's cache framework.
@@ -27,7 +27,7 @@ def fetch_books(user_preferences):
         return cached_books  # Return cached results
 
     # AI-generated book recommendations
-    ai_books = fetch_ai_book_recommendations(user_preferences)
+    ai_books = fetch_ai_book_recommendations(user_preferences, user=user)
 
     book_details = []
     for title in ai_books:

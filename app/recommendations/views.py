@@ -25,26 +25,37 @@ def get_ai_book_recommendations(request):
                 return JsonResponse({"error": "Content-Type must be application/json"}, status=400)
 
             data = json.loads(request.body)
-        
+
         elif request.method == "GET":
             data = request.GET.dict()
 
         else:
             return JsonResponse({"error": "Invalid request method"}, status=405)
 
-        if not data.get("user_id"):
+        user = None
+        user_id = data.get("user_id")
+        print(f"👉 Received user_id: {user_id}")
+
+        if user_id:
+            user = User.objects.filter(id=user_id).first()
+            print(f"👉 Resolved user: {user}")
+            if not user:
+                return JsonResponse({"error": "User not found"}, status=404)
+        else:
             return JsonResponse({"error": "User ID is required"}, status=400)
 
-        # Fetch AI + Google Books recommendations
-        recommendations = fetch_books(data)
+        # ⚙️ Fetch AI + Google Books recommendations with resolved user object
+        recommendations = fetch_books(data, user=user)
+
         return JsonResponse({"recommendations": recommendations})
 
     except json.JSONDecodeError:
         return JsonResponse({"error": "Invalid JSON format"}, status=400)
-    
+
     except Exception as e:
         print(f"🔥 Error: {str(e)}")
         return JsonResponse({"error": f"Unexpected error: {str(e)}"}, status=500)
+
 
 
 # 🔹 Register API
