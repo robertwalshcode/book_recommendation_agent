@@ -1,7 +1,7 @@
 # book_recommendation_agent
 
 ## What is it?
-An AI Agent learning project using gpt-3.5 turbo and Google Books to recommend books based on user preferences and provide details about them. 
+An AI-powered book recommendation system combining GPT-3.5, Google Books API, and retrieval-augmented generation (RAG) to deliver personalized, diverse book suggestions based on user preferences and feedback. 
 
 Built to use and practice these core technologies and concepts:
 
