@@ -7,9 +7,12 @@ Built to use and practice these core technologies and concepts:
 
 - LLM (Large Language Model)
 - Embeddings / Semantic Similarity
+- Cosine similarity for ranking
 - RAG (Retrieval-Augmented Generation)
 - Feedback-Driven Personalization
 - Prompt Engineering
+- Caching / Reuse Optimization
+- JWT-authenticated AI service
 
   
 
