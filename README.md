@@ -1,9 +1,17 @@
 # book_recommendation_agent
 
 ## What is it?
-An AI Agent learning project using gpt-3.5 turbo and Google Books to recommend books based on user preferences and provide details about them.
+An AI Agent learning project using gpt-3.5 turbo and Google Books to recommend books based on user preferences and provide details about them. 
 
+Built to use and practice these core technologies and concepts:
 
+- LLM (Large Language Model)
+- Embeddings / Semantic Similarity
+- RAG (Retrieval-Augmented Generation)
+- Feedback-Driven Personalization
+- Prompt Engineering
+
+  
 
 ## Technologies Used
 
