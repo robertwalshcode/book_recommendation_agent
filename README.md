@@ -67,11 +67,11 @@ Built to use and practice these core technologies and concepts:
 
 3. - For Windows:
 	  In terminal: 
-		```pip install -r requirements_windows.txt```
+		```pip install -r requirements-windows.txt```
 
    - For Linux: 
   	  In terminal:
-		```pip install -r requirements_ubuntu.txt```
+		```pip install -r requirements-ubuntu.txt```
 
    - For other OS's: 
   	  In terminal:
